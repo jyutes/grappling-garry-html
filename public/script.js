@@ -9,7 +9,7 @@ document.body.appendChild(app.view);
 
 // Gravity const
 const g = 0.2;
-const drag = 0.99
+const drag = 0.999
 
 
 
@@ -24,7 +24,7 @@ let garryVelocity = {
 let grappling = false;
 
 // Garry speed
-let garrySpeed = 0.03;
+let garrySpeed = 0.02;
 
 // Garry moveTo
 let moveTo = {
@@ -74,12 +74,13 @@ class Grapple {
                 y: this.sprite.y,
                 id: this.id
             }
-            console.log(moveTo);
+            // console.log(moveTo);
             const xDist = (moveTo.x - garry.x);
             const yDist = (moveTo.y - garry.y);
             garryVelocity.x = xDist*garrySpeed;
             garryVelocity.y = yDist*garrySpeed*-1;
             grappling = true
+            
         })
         this.sprite.on('tap', (event) => {
             moveTo = {
@@ -87,7 +88,7 @@ class Grapple {
                 y: this.pos.y,
                 id: this.id
             }
-            console.log(moveTo);
+            // console.log(moveTo);
             const xDist = (moveTo.x - garry.x);
             const yDist = (moveTo.y - garry.y);
             garryVelocity.x = xDist*garrySpeed;
@@ -100,10 +101,16 @@ class Grapple {
 
     collide () {
         app.stage.removeChild(this.sprite)
-        if (!this.scored) score += combo
+        if (!this.scored) {score += combo; combo += 0.6}
         this.scored = true
+        
     }
 }
+
+// let grapples = [new Grapple({
+//     x: 350/2,
+//     y: 0
+// }, 0)]
 
 let grapples = []
 let i = 0
@@ -118,6 +125,9 @@ while (grapples.length < grapplesInit) {
 
 // Game update
 app.ticker.add((delta) => {
+    tickerCombo = Math.floor(combo)
+    score = Math.floor(score)
+
     // Gravity
     if (!grappling) garryVelocity.y -= g * delta;
 
@@ -147,11 +157,25 @@ app.ticker.add((delta) => {
         app.stop()
     }
     app.stage.removeChild(scoreText)
-    scoreText = new PIXI.Text(String(score));
+    scoreText = new PIXI.Text(String(score) + `   X${tickerCombo}`);
     scoreText.x = 50
-    scoreText.y = 50
+    scoreText.y = garry.y - 10
     app.stage.addChild(scoreText)
     
+    if (garry.y < 250) {
+        app.stage.y += 2
+        // scrolled += 2
+    }
+
+    grappleCount = Math.floor(Math.random() / 4 * 16) + 1
+    if (Math.random() < 0.03) {
+        for (let i = 0; i < grappleCount; i++) {
+            grapples.push(new Grapple ({
+                x: ((350 / grappleCount) * i) + 350/(grappleCount*2),
+                y: 650 - app.stage.y - 650
+            }, grapples.length))
+        }
+    }
 
 });
 

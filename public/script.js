@@ -9,6 +9,9 @@ document.body.appendChild(app.view);
 
 // Gravity const
 const g = 0.2;
+const drag = 0.99
+
+
 
 ////// Garry Init //////
 
@@ -33,26 +36,10 @@ let moveTo = {
 let score = 0;
 let combo = 1;
 
-const scoreText = new PIXI.Text(String(score));
-scoreText.x = 350/2
-scoreText.y = 100
-const style = new PIXI.TextStyle({
-    fontFamily: 'Arial',
-    fontSize: 36,
-    fontStyle: 'italic',
-    fontWeight: 'bold',
-    fill: ['#ffffff', '#00ff99'], // gradient
-    stroke: '#4a1850',
-    strokeThickness: 5,
-    dropShadow: true,
-    dropShadowColor: '#000000',
-    dropShadowBlur: 4,
-    dropShadowAngle: Math.PI / 6,
-    dropShadowDistance: 6,
-    wordWrap: true,
-    wordWrapWidth: 440,
-    lineJoin: 'round'
-});
+scoreText = new PIXI.Text(String(score));
+scoreText.x = 50
+scoreText.y = 50
+app.stage.addChild(scoreText)
 
 // create a new Sprite from an image path
 const garry = PIXI.Sprite.from('/assets/garry.png');
@@ -69,6 +56,7 @@ app.stage.addChild(garry);
 
 class Grapple {
     constructor(pos, id) {
+        this.scored = false
         this.id = id;
         this.sprite = PIXI.Sprite.from('/assets/garry.png');
         // center the sprite's anchor point
@@ -110,8 +98,10 @@ class Grapple {
         app.stage.addChild(this.sprite);
     }
 
-    destructor () {
+    collide () {
         app.stage.removeChild(this.sprite)
+        if (!this.scored) score += combo
+        this.scored = true
     }
 }
 
@@ -135,21 +125,19 @@ app.ticker.add((delta) => {
     garry.x += garryVelocity.x * delta;
     garry.y -= garryVelocity.y * delta;
 
+    if (!grappling) garryVelocity.x *= drag * delta
+
     const grapple = grapples[moveTo.id]
     grapples.forEach(grap => {
         if (spritesIntersex(garry, grap.sprite)) {
-            console.log(score);
-            score += combo
-            grap.destructor();
+            grap.collide();
         }
     });
         
 
     if (spritesIntersex(garry, grapple.sprite)) {
-        console.log('collide');
         grappling = false
-        grapple.destructor();
-        // grapples.splice(grapple.id, 1);
+        grapple.collide();
     }
 
     // If too low, game over
@@ -158,6 +146,11 @@ app.ticker.add((delta) => {
         console.log('Game over');
         app.stop()
     }
+    app.stage.removeChild(scoreText)
+    scoreText = new PIXI.Text(String(score));
+    scoreText.x = 50
+    scoreText.y = 50
+    app.stage.addChild(scoreText)
     
 
 });
